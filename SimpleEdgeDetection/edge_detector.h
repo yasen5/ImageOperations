@@ -11,6 +11,8 @@
 
 using namespace Eigen;
 
+using Image = Matrix<uint8_t, Dynamic, Dynamic>;
+
 enum Kernel { ROBERTS, SOBEL, GAUSSIAN3x3, GAUSSIAN5x5, IDENTITY };
 
 class EdgeDetector {
@@ -19,6 +21,8 @@ public:
                               int stride = 1, int padding = 0);
   static MatrixXf ApplyKernel(const MatrixXf &mat, Kernel kernel_type,
                               int stride = 1, int padding = 0);
+  static Image CleanupEdges(const MatrixXf &mat, float accept_threshold,
+                            float consider_threshold);
 
 private:
   static MatrixXf Convolve(const MatrixXf &mat, const MatrixXf &kernel,
@@ -38,6 +42,12 @@ private:
                         273.0},
       {IDENTITY, Matrix2f::Identity()},
   };
+  static constexpr std::array<std::pair<int, int>, 4>
+      adjacent_edge_check_directions = {
+          {{-1, -1},
+           {-1, 0},
+           {0, -1},
+           {-1, 1}}}; // row adjustment, column adjustment
 };
 
 #endif // IMAGEGRADIENTS_EDGE_DETECTOR_H

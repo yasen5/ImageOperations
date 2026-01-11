@@ -61,3 +61,35 @@ MatrixXf EdgeDetector::Convolve(const MatrixXf &mat, const MatrixXf &kernel,
   }
   return output;
 }
+
+Image EdgeDetector::CleanupEdges(const MatrixXf &mat,
+                                 const float accept_threshold,
+                                 const float consider_threshold) {
+  Image thresholded =
+      Matrix<uint8_t, Dynamic, Dynamic>::Zero(mat.rows(), mat.cols());
+  for (int row = 0; row < mat.rows(); row++) {
+    for (int col = 0; col < mat.rows(); col++) {
+      if (mat(row, col) >= accept_threshold) {
+        thresholded(row, col) = 255;
+      } else if (mat(row, col) >= consider_threshold) {
+        bool edge_adjacent = false;
+        for (const std::pair<int, int> &dir : adjacent_edge_check_directions) {
+          const int check_row = row + dir.first;
+          const int check_col = col + dir.second;
+          if (check_row < 0 || check_row >= thresholded.rows() ||
+              check_col < 0 || check_col >= thresholded.cols()) {
+            continue;
+          }
+          if (thresholded(check_row, check_col) == 255) {
+            edge_adjacent = true;
+            break;
+          }
+        }
+        if (edge_adjacent) {
+          thresholded(row, col) = 255;
+        }
+      }
+    }
+  }
+  return thresholded;
+}
