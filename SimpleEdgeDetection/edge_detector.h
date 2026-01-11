@@ -19,10 +19,10 @@ enum Kernel {
 
 class EdgeDetector {
 public:
-    static MatrixXf ApplyKernel(const cv::Mat& cv_img, Kernel kernel_type, int stride = 1, int padding = 1);
-    static MatrixXf ApplyKernel(const MatrixXf& mat, Kernel kernel_type, int stride = 1, int padding = 1);
+    static MatrixXf ApplyKernel(const cv::Mat& cv_img, Kernel kernel_type, int stride = 1, int padding = 0);
+    static MatrixXf ApplyKernel(const MatrixXf& mat, Kernel kernel_type, int stride = 1, int padding = 0);
 private:
-    static MatrixXf Convolve(const MatrixXf& mat, const MatrixXf& kernel, int stride = 1, int padding = 1);
+    static MatrixXf Convolve(const MatrixXf& mat, const MatrixXf& kernel, int stride = 1, int padding = 0);
     static float FrobeniusInner(const MatrixXf& operand,
                                      const MatrixXf& mat) {
         return (operand.array() * mat.array()).sum();
