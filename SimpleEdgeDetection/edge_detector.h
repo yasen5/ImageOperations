@@ -13,7 +13,7 @@ using namespace Eigen;
 
 using Image = Matrix<uint8_t, Dynamic, Dynamic>;
 
-enum Kernel { ROBERTS, SOBEL, GAUSSIAN3x3, GAUSSIAN5x5, IDENTITY };
+enum Kernel { ROBERTS, SOBEL3x3, SOBEL5x5, GAUSSIAN3x3, GAUSSIAN5x5, IDENTITY };
 
 namespace edge_detection {
 MatrixXf ApplyKernel(const cv::Mat &cv_img, Kernel kernel_type, int stride = 1,
@@ -30,7 +30,10 @@ inline float FrobeniusInner(const MatrixXf &operand, const MatrixXf &mat) {
 }
 inline const std::map<Kernel, MatrixXf> kernels = {
     {ROBERTS, (Matrix2f() << 0, 1, -1, 0).finished()},
-    {SOBEL, (Matrix3f() << -1, 0, 1, -2, 0, 2, -1, 0, 1).finished()},
+    {SOBEL3x3, (Matrix3f() << -1, 0, 1, -2, 0, 2, -1, 0, 1).finished()},
+    {SOBEL5x5, (MatrixXf(5, 5) << 2, 2, 4, 2, 2, 1, 1, 2, 1, 1, 0, 0, 0, 0, 0,
+                -1, -1, -2, -1, -1, -2, -2, -4, -2, -2)
+                   .finished()},
     {GAUSSIAN3x3, (Matrix3f() << 1.0 / 16.0, 1.0 / 8.0, 1.0 / 16.0, 1.0 / 8.0,
                    1.0 / 4.0, 1.0 / 8.0, 1.0 / 16.0, 1.0 / 8.0, 1.0 / 16.0)
                       .finished()},

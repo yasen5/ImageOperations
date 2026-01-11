@@ -32,12 +32,13 @@ MatrixXf edge_detection::ApplyKernel(const MatrixXf &mat,
   const bool inverted_symmetric =
       kernel.col(0).isApprox(-kernel.col(kernel.cols() - 1)) ||
       kernel.row(0).isApprox(-kernel.row(kernel.rows() - 1));
-  std::cout << "Inverted symmetric: " << inverted_symmetric << std::endl;
   MatrixXf output = Convolve(mat, kernel, stride, padding);
   if (inverted_symmetric) {
     output += Convolve(mat, kernel.transpose(), stride, padding);
     output /= 2;
   }
+  // std::cout << "MaxCoeff: " << output.maxCoeff() << std::endl;
+  // output /= output.maxCoeff();
   return output;
 }
 
@@ -67,10 +68,14 @@ Image edge_detection::CleanupEdges(const MatrixXf &mat,
                                    const float consider_threshold) {
   Image thresholded =
       Matrix<uint8_t, Dynamic, Dynamic>::Zero(mat.rows(), mat.cols());
+  float average_edge_likelihood = 0;
+  int num_edges = 0;
   for (int row = 0; row < mat.rows(); row++) {
     for (int col = 0; col < mat.rows(); col++) {
       if (mat(row, col) >= accept_threshold) {
         thresholded(row, col) = 255;
+        average_edge_likelihood += mat(row, col);
+        num_edges++;
       } else if (mat(row, col) >= consider_threshold) {
         bool edge_adjacent = false;
         for (const std::pair<int, int> &dir : adjacent_edge_check_directions) {
@@ -87,9 +92,14 @@ Image edge_detection::CleanupEdges(const MatrixXf &mat,
         }
         if (edge_adjacent) {
           thresholded(row, col) = 255;
+          average_edge_likelihood += mat(row, col);
+          num_edges++;
         }
       }
     }
   }
+  average_edge_likelihood /= num_edges;
+  std::cout << "Average edge likelihood: " << average_edge_likelihood
+            << std::endl;
   return thresholded;
 }
