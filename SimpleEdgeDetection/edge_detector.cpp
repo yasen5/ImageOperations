@@ -10,9 +10,9 @@
 
 using namespace Eigen;
 
-MatrixXf EdgeDetector::ApplyKernel(const cv::Mat &cv_img,
-                                   const Kernel kernel_type, const int stride,
-                                   const int padding) {
+MatrixXf edge_detection::ApplyKernel(const cv::Mat &cv_img,
+                                     const Kernel kernel_type, const int stride,
+                                     const int padding) {
   cv::Mat normalized;
   if (cv_img.channels() == 3) {
     cv::cvtColor(cv_img, normalized, cv::COLOR_BGR2GRAY);
@@ -25,9 +25,9 @@ MatrixXf EdgeDetector::ApplyKernel(const cv::Mat &cv_img,
   return ApplyKernel(eigen_mat, kernel_type, stride, padding);
 }
 
-MatrixXf EdgeDetector::ApplyKernel(const MatrixXf &mat,
-                                   const Kernel kernel_type, const int stride,
-                                   const int padding) {
+MatrixXf edge_detection::ApplyKernel(const MatrixXf &mat,
+                                     const Kernel kernel_type, const int stride,
+                                     const int padding) {
   const MatrixXf &kernel = kernels.at(kernel_type);
   const bool inverted_symmetric =
       kernel.col(0).isApprox(-kernel.col(kernel.cols() - 1)) ||
@@ -41,8 +41,8 @@ MatrixXf EdgeDetector::ApplyKernel(const MatrixXf &mat,
   return output;
 }
 
-MatrixXf EdgeDetector::Convolve(const MatrixXf &mat, const MatrixXf &kernel,
-                                const int stride, const int padding) {
+MatrixXf edge_detection::Convolve(const MatrixXf &mat, const MatrixXf &kernel,
+                                  const int stride, const int padding) {
   const int kernel_sz = kernel.rows();
   const int crossCorrelatedRows =
       (mat.rows() + 2 * padding - kernel_sz) / stride + 1;
@@ -62,9 +62,9 @@ MatrixXf EdgeDetector::Convolve(const MatrixXf &mat, const MatrixXf &kernel,
   return output;
 }
 
-Image EdgeDetector::CleanupEdges(const MatrixXf &mat,
-                                 const float accept_threshold,
-                                 const float consider_threshold) {
+Image edge_detection::CleanupEdges(const MatrixXf &mat,
+                                   const float accept_threshold,
+                                   const float consider_threshold) {
   Image thresholded =
       Matrix<uint8_t, Dynamic, Dynamic>::Zero(mat.rows(), mat.cols());
   for (int row = 0; row < mat.rows(); row++) {
