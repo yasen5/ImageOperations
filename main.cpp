@@ -3,11 +3,13 @@
 
 int main() {
     const std::string img_name = "test_images/test_image3.png";
-    const cv::Mat image = cv::imread("/Users/yasen/CLionProjects/ImageGradients/" + img_name, cv::IMREAD_GRAYSCALE);
-    cv::Mat edges;
-    MatrixXf eigen_mat = EdgeDetector::ApplyKernel(image, GAUSSIAN, 1);
-    cv::eigen2cv(eigen_mat, edges);
-    cv::imshow("Edges", edges);
+    cv::Mat image = cv::imread("/Users/yasen/CLionProjects/ImageGradients/" + img_name, cv::IMREAD_COLOR_BGR);
+    cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
+    // image.convertTo(image, CV_32FC1, 1.0/255.0);
+    Map<Matrix<uint8_t, Dynamic, Dynamic, RowMajor>> eigen_mat(image.ptr<uint8_t>(), image.rows, image.cols);
+    cv::Mat converted(eigen_mat.rows(), eigen_mat.cols(), CV_8U, eigen_mat.data());
+    std::cout << "Channels: " << converted.channels() << std::endl;
+    cv::imshow("Edges", converted);
     cv::waitKey(0);
     cv::destroyAllWindows();
     return 0;
