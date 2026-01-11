@@ -5,38 +5,59 @@
 #include "edge_detector.h"
 
 #include <iostream>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 
 using namespace Eigen;
 
-MatrixXf EdgeDetector::ApplyKernel(const cv::Mat& cv_img, const Kernel kernel_type, const int stride, const int padding) {
-    MatrixXf img;
-    cv::cv2eigen<float_t>(cv_img, img);
-    return ApplyKernel(img, kernel_type, stride, padding);
+MatrixXf EdgeDetector::ApplyKernel(const cv::Mat &cv_img,
+                                   const Kernel kernel_type, const int stride,
+                                   const int padding) {
+  cv::Mat normalized;
+  if (cv_img.channels() == 3) {
+    cv::cvtColor(cv_img, normalized, cv::COLOR_BGR2GRAY);
+  } else {
+    normalized = cv_img;
+  }
+  normalized.convertTo(normalized, CV_32FC1, 1.0 / 255.0);
+  const Map<Matrix<float32_t, Dynamic, Dynamic, RowMajor>> eigen_mat(
+      normalized.ptr<float32_t>(), normalized.rows, normalized.cols);
+  return ApplyKernel(eigen_mat, kernel_type, stride, padding);
 }
 
-MatrixXf EdgeDetector::ApplyKernel(const MatrixXf &mat, const Kernel kernel_type, const int stride, const int padding) {
-    const MatrixXf& kernel = kernels.at(kernel_type);
-    // MatrixXf output = Convolve(mat, kernel, stride, padding) + Convolve(mat, kernel.transpose(), stride, padding);
-    // output /= 2;
-    return mat;
+MatrixXf EdgeDetector::ApplyKernel(const MatrixXf &mat,
+                                   const Kernel kernel_type, const int stride,
+                                   const int padding) {
+  const MatrixXf &kernel = kernels.at(kernel_type);
+  const bool inverted_symmetric =
+      kernel.col(0).isApprox(-kernel.col(kernel.cols() - 1)) ||
+      kernel.row(0).isApprox(-kernel.row(kernel.rows() - 1));
+  std::cout << "Inverted symmetric: " << inverted_symmetric << std::endl;
+  MatrixXf output = Convolve(mat, kernel, stride, padding);
+  if (inverted_symmetric) {
+    output += Convolve(mat, kernel.transpose(), stride, padding);
+  }
+  output /= 2;
+  return output;
 }
 
-MatrixXf EdgeDetector::Convolve(const MatrixXf &mat, const MatrixXf &kernel, const int stride, const int padding) {
-    const int kernel_sz = kernel.rows();
-    const int crossCorrelatedRows =
-        (mat.rows() + 2 * padding - kernel_sz) / stride + 1;
-    const int crossCorrelatedCols =
-        (mat.cols() + 2 * padding - kernel_sz) / stride + 1;
-    MatrixXf padded = MatrixXf::Zero(mat.rows() + 2 * padding, mat.cols() + 2 * padding);
-    MatrixXf output = MatrixXf::Zero(crossCorrelatedRows, crossCorrelatedCols);
-    padded.block(padding, padding, mat.rows(), mat.cols()) = mat;
-    for (int row = 0; row < crossCorrelatedRows; row++) {
-        for (int col = 0; col < crossCorrelatedCols; col++) {
-            output(row, col) = FrobeniusInner(
-                padded.block(row * stride, col * stride, kernel_sz, kernel_sz),
-                kernel);
-        }
+MatrixXf EdgeDetector::Convolve(const MatrixXf &mat, const MatrixXf &kernel,
+                                const int stride, const int padding) {
+  const int kernel_sz = kernel.rows();
+  const int crossCorrelatedRows =
+      (mat.rows() + 2 * padding - kernel_sz) / stride + 1;
+  const int crossCorrelatedCols =
+      (mat.cols() + 2 * padding - kernel_sz) / stride + 1;
+  MatrixXf padded =
+      MatrixXf::Zero(mat.rows() + 2 * padding, mat.cols() + 2 * padding);
+  MatrixXf output = MatrixXf::Zero(crossCorrelatedRows, crossCorrelatedCols);
+  padded.block(padding, padding, mat.rows(), mat.cols()) = mat;
+  for (int row = 0; row < crossCorrelatedRows; row++) {
+    for (int col = 0; col < crossCorrelatedCols; col++) {
+      output(row, col) = FrobeniusInner(
+          padded.block(row * stride, col * stride, kernel_sz, kernel_sz),
+          kernel);
     }
-    return output; 
+  }
+  return output;
 }
-

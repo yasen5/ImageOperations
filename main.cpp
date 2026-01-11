@@ -1,16 +1,18 @@
 #include "SimpleEdgeDetection/edge_detector.h"
 #include <opencv2/opencv.hpp>
 
+using MatrixXfRM = Matrix<float, Dynamic, Dynamic, RowMajor>;
+
 int main() {
-    const std::string img_name = "test_images/test_image3.png";
-    cv::Mat image = cv::imread("/Users/yasen/CLionProjects/ImageGradients/" + img_name, cv::IMREAD_COLOR_BGR);
-    cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
-    image.convertTo(image, CV_32FC1, 1.0/255.0);
-    Map<Matrix<float32_t, Dynamic, Dynamic, RowMajor>> eigen_mat(image.ptr<float32_t>(), image.rows, image.cols);
-    cv::Mat converted(eigen_mat.rows(), eigen_mat.cols(), CV_32FC1, eigen_mat.data());
-    std::cout << "Channels: " << converted.channels() << std::endl;
-    cv::imshow("Edges", converted);
-    cv::waitKey(0);
-    cv::destroyAllWindows();
-    return 0;
+  const std::string img_name = "test_images/test_image.png";
+  const cv::Mat image =
+      cv::imread("/Users/yasen/CLionProjects/ImageGradients/" + img_name,
+                 cv::IMREAD_COLOR);
+  MatrixXfRM kerneled = EdgeDetector::ApplyKernel(image, SOBEL);
+  const cv::Mat cv_kerneled(kerneled.rows(), kerneled.cols(), CV_32FC1,
+                            kerneled.data());
+  cv::imshow("Edges", cv_kerneled);
+  cv::waitKey(0);
+  cv::destroyAllWindows();
+  return 0;
 }
