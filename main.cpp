@@ -8,7 +8,7 @@ int main() {
   const cv::Mat image =
       cv::imread("/Users/yasen/CLionProjects/ImageGradients/" + img_name,
                  cv::IMREAD_COLOR);
-  MatrixXfRM kerneled = EdgeDetector::ApplyKernel(image, SOBEL);
+  MatrixXfRM kerneled = EdgeDetector::ApplyKernel(image, ROBERTS);
   const cv::Mat cv_kerneled(kerneled.rows(), kerneled.cols(), CV_32FC1,
                             kerneled.data());
   cv::imshow("Edges", cv_kerneled);

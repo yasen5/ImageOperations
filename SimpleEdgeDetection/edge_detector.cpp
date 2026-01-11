@@ -36,8 +36,8 @@ MatrixXf EdgeDetector::ApplyKernel(const MatrixXf &mat,
   MatrixXf output = Convolve(mat, kernel, stride, padding);
   if (inverted_symmetric) {
     output += Convolve(mat, kernel.transpose(), stride, padding);
+    output /= 2;
   }
-  output /= 2;
   return output;
 }
 
