@@ -4,12 +4,21 @@
 using namespace edge_detection;
 using MatrixXfRM = Matrix<float, Dynamic, Dynamic, RowMajor>;
 
-cv::Mat get_kerneled(const cv::Mat &image, Kernel kernel_type) {
-  Matrix<uint8_t, Dynamic, Dynamic, RowMajor> kerneled =
-      CleanupEdges(ApplyKernel(image, kernel_type), 0.3, 0.4);
-  const cv::Mat cv_kerneled(kerneled.rows(), kerneled.cols(), CV_8UC1,
-                      kerneled.data());
-  return cv_kerneled.clone();
+cv::Mat get_kerneled(const cv::Mat &image, Kernel kernel_type,
+                     const bool edge) {
+  const MatrixXf kerneled = ApplyKernel(image, kernel_type, 5);
+  if (edge) {
+    Matrix<uint8_t, Dynamic, Dynamic, RowMajor> cleaned =
+        CleanupEdges(kerneled, 0.3, 0.4);
+    const cv::Mat cv_kerneled(cleaned.rows(), cleaned.cols(), CV_8UC1,
+                              cleaned.data());
+    return cv_kerneled.clone();
+  } else {
+    MatrixXfRM row_major = kerneled;
+    const cv::Mat cv_kerneled(row_major.rows(), row_major.cols(), CV_32FC1,
+                              row_major.data());
+    return cv_kerneled.clone();
+  }
 }
 
 void resize(std::vector<cv::Mat> &img_list) {
@@ -24,13 +33,25 @@ int main() {
       cv::imread("/Users/yasen/CLionProjects/ImageGradients/" + img_name,
                  cv::IMREAD_COLOR);
 
-  std::vector<cv::Mat> kerneled{get_kerneled(image, ROBERTS),
-                                get_kerneled(image, SOBEL3x3),
-                                get_kerneled(image, SOBEL5x5)};
-  resize(kerneled);
-  cv::Mat combined;
-  cv::hconcat(kerneled, combined);
-  cv::imshow("All Kernels Side-by-Side", combined);
+  const std::vector<Kernel> edge_kernels = {ROBERTS, SOBEL3x3, SOBEL5x5};
+  const std::vector<Kernel> other_kernels = {GAUSSIAN3x3, GAUSSIAN5x5};
+  std::vector<cv::Mat> edge_detected;
+  std::vector<cv::Mat> other;
+  for (const Kernel kernel : edge_kernels) {
+    edge_detected.push_back(get_kerneled(image, kernel, true));
+  }
+  for (const Kernel kernel : other_kernels) {
+    other.push_back(get_kerneled(image, kernel, false));
+  }
+
+  resize(edge_detected);
+  resize(other);
+  cv::Mat combined_edge;
+  cv::hconcat(edge_detected, combined_edge);
+  cv::imshow("Edge Kernels", combined_edge);
+  cv::Mat combined_other;
+  cv::hconcat(other, combined_other);
+  cv::imshow("Other Kernels", combined_other);
   cv::waitKey(0);
   cv::destroyAllWindows();
 
