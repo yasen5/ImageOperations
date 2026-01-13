@@ -4,9 +4,12 @@
 using namespace edge_detection;
 using MatrixXfRM = Matrix<float, Dynamic, Dynamic, RowMajor>;
 
+constexpr size_t DISPLAY_SIZE_X = 500;
+constexpr size_t DISPLAY_SIZE_Y = 500;
+
 cv::Mat get_kerneled(const cv::Mat &image, Kernel kernel_type,
                      const bool edge) {
-  const MatrixXf kerneled = ApplyKernel(image, kernel_type, 5);
+  const MatrixXf kerneled = ApplyKernel(image, kernel_type, 1);
   if (edge) {
     Matrix<uint8_t, Dynamic, Dynamic, RowMajor> cleaned =
         CleanupEdges(kerneled, 0.3, 0.4);
@@ -23,7 +26,7 @@ cv::Mat get_kerneled(const cv::Mat &image, Kernel kernel_type,
 
 void resize(std::vector<cv::Mat> &img_list) {
   for (cv::Mat &img : img_list) {
-    cv::resize(img, img, img_list[0].size());
+    cv::resize(img, img, cv::Size2d{DISPLAY_SIZE_X, DISPLAY_SIZE_Y});
   }
 }
 
