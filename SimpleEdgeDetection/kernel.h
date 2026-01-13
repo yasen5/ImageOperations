@@ -17,9 +17,9 @@ enum Kernel { ROBERTS, SOBEL3x3, SOBEL5x5, GAUSSIAN3x3, GAUSSIAN5x5, IDENTITY };
 
 namespace edge_detection {
 MatrixXf ApplyKernel(const cv::Mat &cv_img, Kernel kernel_type, int stride = 1,
-                     int padding = 0);
+                     int padding = 0, bool transpose = false);
 MatrixXf ApplyKernel(const MatrixXf &mat, Kernel kernel_type, int stride = 1,
-                     int padding = 0);
+                     int padding = 0, bool transpose = false);
 Image CleanupEdges(const MatrixXf &mat, float accept_threshold,
                    float consider_threshold);
 

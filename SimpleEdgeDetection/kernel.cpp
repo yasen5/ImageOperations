@@ -2,7 +2,7 @@
 // Created by Yasen on 1/10/26.
 //
 
-#include "edge_detector.h"
+#include "kernel.h"
 
 #include <iostream>
 #include <opencv2/highgui.hpp>
@@ -12,7 +12,7 @@ using namespace Eigen;
 
 MatrixXf edge_detection::ApplyKernel(const cv::Mat &cv_img,
                                      const Kernel kernel_type, const int stride,
-                                     const int padding) {
+                                     const int padding, const bool transpose) {
   cv::Mat normalized;
   if (cv_img.channels() == 3) {
     cv::cvtColor(cv_img, normalized, cv::COLOR_BGR2GRAY);
@@ -22,21 +22,15 @@ MatrixXf edge_detection::ApplyKernel(const cv::Mat &cv_img,
   normalized.convertTo(normalized, CV_32FC1, 1.0 / 255.0);
   const Map<Matrix<float32_t, Dynamic, Dynamic, RowMajor>> eigen_mat(
       normalized.ptr<float32_t>(), normalized.rows, normalized.cols);
-  return ApplyKernel(eigen_mat, kernel_type, stride, padding);
+  return ApplyKernel(eigen_mat, kernel_type, stride, padding, transpose);
 }
 
 MatrixXf edge_detection::ApplyKernel(const MatrixXf &mat,
                                      const Kernel kernel_type, const int stride,
-                                     const int padding) {
-  const MatrixXf &kernel = kernels.at(kernel_type);
-  const bool inverted_symmetric =
-      kernel.col(0).isApprox(-kernel.col(kernel.cols() - 1)) ||
-      kernel.row(0).isApprox(-kernel.row(kernel.rows() - 1));
+                                     const int padding, const bool transpose) {
+  const MatrixXf &kernel =
+      transpose ? kernels.at(kernel_type).transpose() : kernels.at(kernel_type);
   MatrixXf output = Convolve(mat, kernel, stride, padding);
-  if (inverted_symmetric) {
-    output += Convolve(mat, kernel.transpose(), stride, padding);
-    output /= 2;
-  }
   // std::cout << "MaxCoeff: " << output.maxCoeff() << std::endl;
   // output /= output.maxCoeff();
   return output;

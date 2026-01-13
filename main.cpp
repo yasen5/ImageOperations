@@ -1,4 +1,4 @@
-#include "SimpleEdgeDetection/edge_detector.h"
+#include "SimpleEdgeDetection/kernel.h"
 #include <opencv2/opencv.hpp>
 
 using namespace edge_detection;
@@ -9,10 +9,12 @@ constexpr size_t DISPLAY_SIZE_Y = 500;
 
 cv::Mat get_kerneled(const cv::Mat &image, Kernel kernel_type,
                      const bool edge) {
-  const MatrixXf kerneled = ApplyKernel(image, kernel_type, 1);
+  MatrixXf kerneled = ApplyKernel(image, kernel_type, 1).cwiseAbs();
+  const float kernel_sum = kernels.at(kernel_type).cwiseAbs().sum();
   if (edge) {
+    kerneled += ApplyKernel(image, kernel_type, 1, 0, true).cwiseAbs();
     Matrix<uint8_t, Dynamic, Dynamic, RowMajor> cleaned =
-        CleanupEdges(kerneled, 0.3, 0.4);
+        CleanupEdges(kerneled, 0.05 * kernel_sum, 0.03 * kernel_sum);
     const cv::Mat cv_kerneled(cleaned.rows(), cleaned.cols(), CV_8UC1,
                               cleaned.data());
     return cv_kerneled.clone();
@@ -31,7 +33,7 @@ void resize(std::vector<cv::Mat> &img_list) {
 }
 
 int main() {
-  const std::string img_name = "test_images/test_image.png";
+  const std::string img_name = "test_images/test_image4.jpg";
   const cv::Mat image =
       cv::imread("/Users/yasen/CLionProjects/ImageGradients/" + img_name,
                  cv::IMREAD_COLOR);
