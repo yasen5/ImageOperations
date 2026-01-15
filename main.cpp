@@ -1,3 +1,4 @@
+#include "SimpleEdgeDetection/canny.h"
 #include "SimpleEdgeDetection/kernel.h"
 #include <opencv2/opencv.hpp>
 
@@ -37,28 +38,34 @@ int main() {
   const cv::Mat image =
       cv::imread("/Users/yasen/CLionProjects/ImageGradients/" + img_name,
                  cv::IMREAD_COLOR);
+  //
+  // const std::vector<Kernel> edge_kernels = {ROBERTS, SOBEL3x3, SOBEL5x5};
+  // const std::vector<Kernel> other_kernels = {GAUSSIAN3x3, GAUSSIAN5x5};
+  // std::vector<cv::Mat> edge_detected;
+  // std::vector<cv::Mat> other;
+  // for (const Kernel kernel : edge_kernels) {
+  //   edge_detected.push_back(get_kerneled(image, kernel, true));
+  // }
+  // for (const Kernel kernel : other_kernels) {
+  //   other.push_back(get_kerneled(image, kernel, false));
+  // }
+  //
+  // resize(edge_detected);
+  // resize(other);
+  // cv::Mat combined_edge;
+  // cv::hconcat(edge_detected, combined_edge);
+  // cv::imshow("Edge Kernels", combined_edge);
+  // cv::Mat combined_other;
+  // cv::hconcat(other, combined_other);
+  // cv::imshow("Other Kernels", combined_other);
+  // cv::waitKey(0);
+  // cv::destroyAllWindows();
 
-  const std::vector<Kernel> edge_kernels = {ROBERTS, SOBEL3x3, SOBEL5x5};
-  const std::vector<Kernel> other_kernels = {GAUSSIAN3x3, GAUSSIAN5x5};
-  std::vector<cv::Mat> edge_detected;
-  std::vector<cv::Mat> other;
-  for (const Kernel kernel : edge_kernels) {
-    edge_detected.push_back(get_kerneled(image, kernel, true));
+  for (float threshold = 0.01; threshold < 0.3; threshold += 0.01) {
+    cv::Mat cannied = edge_detection::Canny(image, threshold);
+    cv::imshow(std::format("Threshold: %f", threshold), cannied);
+    cv::waitKey(0);
   }
-  for (const Kernel kernel : other_kernels) {
-    other.push_back(get_kerneled(image, kernel, false));
-  }
-
-  resize(edge_detected);
-  resize(other);
-  cv::Mat combined_edge;
-  cv::hconcat(edge_detected, combined_edge);
-  cv::imshow("Edge Kernels", combined_edge);
-  cv::Mat combined_other;
-  cv::hconcat(other, combined_other);
-  cv::imshow("Other Kernels", combined_other);
-  cv::waitKey(0);
-  cv::destroyAllWindows();
 
   return 0;
 }
