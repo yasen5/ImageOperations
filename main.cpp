@@ -61,8 +61,12 @@ int main() {
   // cv::waitKey(0);
   // cv::destroyAllWindows();
 
+  const cv::Mat fake_image =
+      (cv::Mat_<double>(5, 5) << 0, 50, 255, 50, 0, 0, 50, 255, 50, 0, 0, 50,
+       255, 50, 0, 0, 50, 255, 50, 0, 0, 50, 255, 50, 0);
+
   for (float threshold = 0.01; threshold < 0.3; threshold += 0.01) {
-    cv::Mat cannied = edge_detection::Canny(image, threshold);
+    cv::Mat cannied = edge_detection::Canny(fake_image, threshold);
     cv::imshow(std::format("Threshold: %f", threshold), cannied);
     cv::waitKey(0);
   }
