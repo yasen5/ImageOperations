@@ -10,7 +10,8 @@
 #include <opencv2/core/mat.hpp>
 
 namespace edge_detection {
-cv::Mat Canny(const cv::Mat &image, float consideration_threshold);
+cv::Mat_<float> Canny(const cv::Mat_<float> &image,
+                      float consideration_threshold);
 } // namespace edge_detection
 
 #endif // IMAGEGRADIENTS_CANNY_H
