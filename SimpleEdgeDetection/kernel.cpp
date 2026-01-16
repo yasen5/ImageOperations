@@ -12,9 +12,9 @@ cv::Mat_<float> edge_detection::ApplyKernel(const cv::Mat_<float> &mat,
                                             const Kernel kernel_type,
                                             const int stride, const int padding,
                                             const bool transpose) {
-  const cv::Mat_<float> &kernel =
-      transpose ? kernels.at(kernel_type).t() : kernels.at(kernel_type);
-  cv::Mat_<float> output = Convolve(mat, kernel, stride, padding);
+  const cv::Mat_<float> &kernel = kernels.at(kernel_type);
+  cv::Mat_<float> output =
+      Convolve(mat, transpose ? kernel.t() : kernel, stride, padding);
   return output;
 }
 

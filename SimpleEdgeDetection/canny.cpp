@@ -7,11 +7,11 @@
 #include <iostream>
 cv::Mat_<float> edge_detection::Canny(const cv::Mat_<float> &image,
                                       const float consideration_threshold) {
-  // cv::Mat_<float> blurred = ApplyKernel(image, GAUSSIAN3x3);
-  cv::Mat_<float> edges_x = abs(ApplyKernel(image, SOBEL3x3));
-  cv::Mat_<float> edges_y = abs(ApplyKernel(image, SOBEL3x3, true));
+  cv::Mat_<float> blurred = Convolve(image, GaussianKernel(10, 4));
+  cv::Mat_<float> edges_x = abs(ApplyKernel(image, SOBEL3x3, 1, 0, false));
+  cv::Mat_<float> edges_y = abs(ApplyKernel(image, SOBEL3x3, 1, 0, true));
   cv::Mat_<float> total_edges = edges_x.mul(edges_x) + edges_y.mul(edges_y);
-  const int search_distance = total_edges.rows * total_edges.cols / 1000;
+  const int search_distance = 3;
   for (int row = 0; row < total_edges.rows; row++) {
     for (int col = 0; col < total_edges.cols; col++) {
       float x_gradient = edges_x.at<float>(row, col);
@@ -56,7 +56,7 @@ cv::Mat_<float> edge_detection::Canny(const cv::Mat_<float> &image,
         }
       }
       for (int i = -search_distance / 2; i < search_distance / 2; i++) {
-        constexpr int thickness = 50;
+        constexpr int thickness = 0;
         const int check_col = col + static_cast<int>(i * x_gradient);
         const int check_row = row + static_cast<int>(i * y_gradient);
         if (check_col < 0) {
