@@ -23,7 +23,7 @@ void resize(std::vector<cv::Mat_<float>> &img_list) {
 }
 
 int main() {
-  const std::string img_name = "test_images/lowrespx.png";
+  const std::string img_name = "test_images/test_image5.jpg";
   const cv::Mat color_image =
       cv::imread("/Users/yasen/CLionProjects/ImageGradients/" + img_name,
                  cv::IMREAD_COLOR);
@@ -41,43 +41,12 @@ int main() {
   cv::Mat_<float> fake_normalized;
   fake_image.convertTo(fake_normalized, CV_32FC1, 1.0 / 255.0);
 
-  // const std::vector<Kernel> edge_kernels = {SOBEL3x3, SOBEL5x5};
-  // const std::vector<Kernel> other_kernels; // = {GAUSSIAN3x3, GAUSSIAN5x5};
-  // std::vector<cv::Mat_<float>> edge_detected;
-  // std::vector<cv::Mat_<float>> other;
-  // for (const Kernel kernel : edge_kernels) {
-  //   edge_detected.push_back(get_kerneled(normalized, kernel, true));
-  // }
-  // for (const Kernel kernel : other_kernels) {
-  //   other.push_back(get_kerneled(normalized, kernel, false));
-  // }
-
-  // resize(edge_detected);
-  // resize(other);
-  // cv::Mat_<float> combined_edge;
-  // cv::hconcat(edge_detected, combined_edge);
-  // cv::imshow("Edge Kernels", combined_edge);
-  // cv::Mat_<float> combined_other;
-  // cv::hconcat(other, combined_other);
-  // cv::imshow("Other Kernels", combined_other);
-  // cv::waitKey(0);
-  // cv::destroyAllWindows();
-
-  float threshold = 0.5;
-  int gaussian_size = 5;
-  float gaussian_sigma = 1.8;
-  int search_distance = 3;
-  while (true) {
-    // std::cout << "Enter sigma" << std::endl;
-    // std::cin >> gaussian_sigma;
-    cv::Mat_<float> cannied = edge_detection::Canny(
-        normalized, threshold, gaussian_sigma, gaussian_size, search_distance);
-    cv::imshow(std::format("Threshold: %f, Search Dist: %i", threshold,
-                           search_distance),
-               cannied);
-    cv::waitKey(0);
-    cv::destroyAllWindows();
-  }
+  cv::Mat_<float> cannied = edge_detection::Canny(normalized, false);
+  cv::imshow(std::format("No hist"), cannied);
+  cv::Mat_<float> hist = edge_detection::Canny(normalized, true);
+  cv::imshow(std::format("Hist"), hist);
+  cv::waitKey(0);
+  cv::destroyAllWindows();
 
   return 0;
 }

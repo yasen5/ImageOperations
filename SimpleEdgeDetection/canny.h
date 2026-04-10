@@ -11,12 +11,12 @@
 
 namespace edge_detection {
 constexpr float NMS_THRESHOLD = 0.5;
-constexpr float GAUSSIAN_SIGMA = 0.1;
-constexpr int GAUSSIAN_KERNEL_SIZE = 4.0;
-constexpr int SEARCH_DISTANCE = 3;
-constexpr float HISTERESIS_RIDGE_START_THRESHOLD = 1.0;
-constexpr float HISTERESIS_RIDGE_CONTINUE_THRESHOLD = 1.0;
-cv::Mat_<float> Canny(const cv::Mat_<float> &image,
+constexpr float GAUSSIAN_SIGMA = 1.8;
+constexpr int GAUSSIAN_KERNEL_SIZE = 5.0;
+constexpr int SEARCH_DISTANCE = 400;
+constexpr float HISTERESIS_RIDGE_START_THRESHOLD = 0.5;
+constexpr float HISTERESIS_RIDGE_CONTINUE_THRESHOLD = 0.3;
+cv::Mat_<float> Canny(const cv::Mat_<float> &image, bool histeresis,
                       float nms_threshold = NMS_THRESHOLD,
                       float gaussian_sigma = GAUSSIAN_SIGMA,
                       int gaussian_kernel_size = GAUSSIAN_KERNEL_SIZE,
