@@ -23,13 +23,15 @@ void resize(std::vector<cv::Mat_<float>> &img_list) {
 }
 
 int main() {
-  const std::string img_name = "test_images/test_image5.jpg";
+  const std::string img_name = "test_images/lowrespx.png";
   const cv::Mat color_image =
       cv::imread("/Users/yasen/CLionProjects/ImageGradients/" + img_name,
                  cv::IMREAD_COLOR);
 
-  cv::Mat grayscale;
-  cv::cvtColor(color_image, grayscale, cv::COLOR_BGR2GRAY);
+  cv::Mat grayscale =
+      cv::imread("/Users/yasen/CLionProjects/ImageGradients/" + img_name,
+                 cv::IMREAD_GRAYSCALE);
+  // cv::cvtColor(color_image, grayscale, cv::COLOR_BGR2GRAY);
 
   cv::Mat_<float> normalized;
   grayscale.convertTo(normalized, CV_32FC1, 1.0 / 255.0);
@@ -61,10 +63,20 @@ int main() {
   // cv::waitKey(0);
   // cv::destroyAllWindows();
 
-  for (double threshold = 0.01; threshold < 0.3; threshold += 0.01) {
-    cv::Mat_<float> cannied = edge_detection::Canny(normalized, threshold);
-    cv::imshow(std::format("Threshold: %f", threshold), cannied);
+  float threshold = 0.5;
+  int gaussian_size = 5;
+  float gaussian_sigma = 1.8;
+  int search_distance = 3;
+  while (true) {
+    // std::cout << "Enter sigma" << std::endl;
+    // std::cin >> gaussian_sigma;
+    cv::Mat_<float> cannied = edge_detection::Canny(
+        normalized, threshold, gaussian_sigma, gaussian_size, search_distance);
+    cv::imshow(std::format("Threshold: %f, Search Dist: %i", threshold,
+                           search_distance),
+               cannied);
     cv::waitKey(0);
+    cv::destroyAllWindows();
   }
 
   return 0;
