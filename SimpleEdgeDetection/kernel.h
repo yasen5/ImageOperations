@@ -27,19 +27,27 @@ inline float FrobeniusInner(const cv::Mat_<float> &a,
   return a.dot(b);
 }
 
+// clang-format off
 inline const std::map<Kernel, cv::Mat_<float>> kernels = {
-    {ROBERTS, (cv::Mat_<float>(2, 2) << 0, 1, -1, 0)},
-    {SOBEL3x3, (cv::Mat_<float>(3, 3) << -1, 0, 1, -2, 0, 2, -1, 0, 1)},
-    {SOBEL5x5, (cv::Mat_<float>(5, 5) << 2, 2, 4, 2, 2, 1, 1, 2, 1, 1, 0, 0, 0,
-                0, 0, -1, -1, -2, -1, -1, -2, -2, -4, -2, -2)},
-    {GAUSSIAN3x3,
-     (cv::Mat_<float>(3, 3) << 1.0 / 16.0, 1.0 / 8.0, 1.0 / 16.0, 1.0 / 8.0,
-      1.0 / 4.0, 1.0 / 8.0, 1.0 / 16.0, 1.0 / 8.0, 1.0 / 16.0)},
-    {GAUSSIAN5x5, (cv::Mat_<float>(5, 5) << 1, 4, 7, 4, 1, 4, 16, 26, 16, 4, 7,
-                   26, 41, 26, 7, 4, 16, 26, 16, 4, 1, 4, 7, 4, 1) /
-                      273.0},
+    {ROBERTS, (cv::Mat_<float>(2, 2) <<
+      0, 1,
+      -1, 0)},
+    {SOBEL3x3, (cv::Mat_<float>(3, 3) <<
+      -1, 0, 1,
+      -2, 0, 2,
+      -1, 0, 1)},
+    {SOBEL5x5, (cv::Mat_<float>(5, 5) <<
+      2, 2, 4, 2, 2,
+      1, 1, 2, 1, 1,
+      0, 0, 0, 0, 0,
+      -1, -1, -2, -1, -1,
+      -2, -2, -4, -2, -2)},
 };
+// clang-format on
 inline cv::Mat_<float> GaussianKernel(int dimension, float sigma) {
+  if (sigma == 0) {
+    return cv::Mat::eye(dimension, dimension, CV_32FC1);
+  }
   cv::Mat_<float> gaussian_kernel =
       cv::Mat_<float>::zeros(dimension, dimension);
   int center = dimension / 2;

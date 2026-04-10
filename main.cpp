@@ -31,20 +31,47 @@ int main() {
   cv::Mat grayscale =
       cv::imread("/Users/yasen/CLionProjects/ImageGradients/" + img_name,
                  cv::IMREAD_GRAYSCALE);
-  // cv::cvtColor(color_image, grayscale, cv::COLOR_BGR2GRAY);
+  cv::cvtColor(color_image, grayscale, cv::COLOR_BGR2GRAY);
 
   cv::Mat_<float> normalized;
   grayscale.convertTo(normalized, CV_32FC1, 1.0 / 255.0);
-  const cv::Mat_<float> fake_image =
-      (cv::Mat_<float>(5, 5) << 0, 50, 255, 50, 0, 0, 50, 255, 50, 0, 0, 50,
-       255, 50, 0, 0, 50, 255, 50, 0, 0, 50, 255, 50, 0);
-  cv::Mat_<float> fake_normalized;
-  fake_image.convertTo(fake_normalized, CV_32FC1, 1.0 / 255.0);
+  // const cv::Mat_<float> fake_image =
+  //     (cv::Mat_<float>(5, 5) << 0, 50, 255, 50, 0, 0, 50, 255, 50, 0, 0, 50,
+  //      255, 50, 0, 0, 50, 255, 50, 0, 0, 50, 255, 50, 0);
+  // cv::Mat_<float> fake_normalized;
+  // fake_image.convertTo(fake_normalized, CV_32FC1, 1.0 / 255.0);
 
-  cv::Mat_<float> cannied = edge_detection::Canny(normalized, false);
+  // clang-format off
+  const cv::Mat_<float> wall_image =
+      (cv::Mat_<float>(20, 21) <<
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        );
+  // clang-format on
+  wall_image.convertTo(wall_image, CV_32FC1, 1.0);
+
+  cv::Mat_<float> cannied = edge_detection::Canny(wall_image, false);
   cv::imshow(std::format("No hist"), cannied);
-  cv::Mat_<float> hist = edge_detection::Canny(normalized, true);
-  cv::imshow(std::format("Hist"), hist);
+  // cv::Mat_<float> hist = edge_detection::Canny(wall_image, true);
+  // cv::imshow(std::format("Hist"), hist);
   cv::waitKey(0);
   cv::destroyAllWindows();
 

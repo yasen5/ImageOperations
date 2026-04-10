@@ -13,8 +13,8 @@ cv::Mat_<float> edge_detection::Canny(const cv::Mat_<float> &image,
                                       const int search_distance) {
   const cv::Mat_<float> blurred =
       Convolve(image, GaussianKernel(gaussian_kernel_size, sigma));
-  cv::Mat_<float> edges_x = abs(ApplyKernel(blurred, SOBEL3x3, 1, 0, false));
-  cv::Mat_<float> edges_y = abs(ApplyKernel(blurred, SOBEL3x3, 1, 0, true));
+  cv::Mat_<float> edges_x = abs(ApplyKernel(image, SOBEL3x3, 1, 0, false));
+  cv::Mat_<float> edges_y = abs(ApplyKernel(image, SOBEL3x3, 1, 0, true));
   cv::Mat_<float> total_edges;
   if (histeresis) {
     total_edges = Histeresis(edges_x, edges_y);
@@ -33,68 +33,72 @@ cv::Mat_<float> edge_detection::Canny(const cv::Mat_<float> &image,
       y_gradient /= scalar;
       float max_value = 0;
       int max_index = INFINITY;
-      for (int i = -search_distance / 2; i < search_distance / 2; i++) {
-        const int check_col = col + static_cast<int>(i * x_gradient);
-        const int check_row = row + static_cast<int>(i * y_gradient);
-        if (check_col < 0) {
-          if (x_gradient < 0) {
-            break;
+      for (int sign = -1; sign < 2; sign += 2) {
+        for (int i = 0; i <= search_distance; i++) {
+          const int check_col = col + sign * lround(i * x_gradient);
+          const int check_row = row + sign * lround(i * y_gradient);
+          if (check_col < 0) {
+            if (sign * x_gradient < 0) {
+              break;
+            }
+            continue;
           }
-          continue;
-        }
-        if (check_row < 0) {
-          if (y_gradient < 0) {
-            break;
+          if (check_row < 0) {
+            if (sign * y_gradient < 0) {
+              break;
+            }
+            continue;
           }
-          continue;
-        }
-        if (check_col >= total_edges.cols) {
-          if (x_gradient > 0) {
-            break;
+          if (check_col >= total_edges.cols) {
+            if (sign * x_gradient > 0) {
+              break;
+            }
+            continue;
           }
-          continue;
-        }
-        if (check_row >= total_edges.rows) {
-          if (y_gradient > 0) {
-            break;
+          if (check_row >= total_edges.rows) {
+            if (sign * y_gradient > 0) {
+              break;
+            }
+            continue;
           }
-          continue;
-        }
-        if (total_edges.at<float>(check_row, check_col) > max_value) {
-          max_value = total_edges.at<float>(check_row, check_col);
-          max_index = i;
-        }
-      }
-      for (int i = -search_distance / 2; i < search_distance / 2; i++) {
-        constexpr int thickness = 1;
-        const int check_col = col + static_cast<int>(i * x_gradient);
-        const int check_row = row + static_cast<int>(i * y_gradient);
-        if (check_col < 0) {
-          if (x_gradient < 0) {
-            break;
+          if (total_edges.at<float>(check_row, check_col) > max_value) {
+            max_value = total_edges.at<float>(check_row, check_col);
+            max_index = i;
           }
-          continue;
         }
-        if (check_row < 0) {
-          if (y_gradient < 0) {
-            break;
+        for (int i = 0; i <= search_distance; i++) {
+          constexpr int thickness = 1;
+          const int check_col = col + sign * lround(i * x_gradient);
+          const int check_row = row + sign * lround(i * y_gradient);
+          if (check_col < 0) {
+            if (sign * x_gradient < 0) {
+              break;
+            }
+            continue;
           }
-          continue;
-        }
-        if (check_col >= total_edges.cols) {
-          if (x_gradient > 0) {
-            break;
+          if (check_row < 0) {
+            if (sign * y_gradient < 0) {
+              break;
+            }
+            continue;
           }
-          continue;
-        }
-        if (check_row >= total_edges.rows) {
-          if (y_gradient > 0) {
-            break;
+          if (check_col >= total_edges.cols) {
+            if (sign * x_gradient > 0) {
+              break;
+            }
+            continue;
           }
-          continue;
+          if (check_row >= total_edges.rows) {
+            if (sign * y_gradient > 0) {
+              break;
+            }
+            continue;
+          }
+          total_edges.at<float>(check_row, check_col) =
+              (std::abs(i - max_index) <= thickness / 2) ? 1 : 0;
+          std::cout << "Check_row: " << check_row << " Check_col: " << check_col
+                    << std::endl;
         }
-        total_edges.at<float>(check_row, check_col) =
-            (std::abs(i - max_index) <= thickness / 2) ? 1 : 0;
       }
     }
   }
