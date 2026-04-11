@@ -29,7 +29,7 @@ cv::Mat_<float> edge_detection::Canny(const cv::Mat_<float> &image,
   cv::Mat_<float> total_edges;
   if (histeresis) {
     total_edges = Histeresis(edges_x, edges_y);
-    return total_edges;
+    // return total_edges;
   } else {
     total_edges = edges_x.mul(edges_x) + edges_y.mul(edges_y);
     sqrt(total_edges, total_edges);
@@ -95,7 +95,7 @@ cv::Mat_<float> edge_detection::Canny(const cv::Mat_<float> &image,
       }
     }
   }
-  CullTheWeak(total_edges);
+  // CullTheWeak(total_edges);
   return total_edges;
 }
 
@@ -103,16 +103,15 @@ cv::Mat_<float> edge_detection::Histeresis(cv::Mat_<float> &x_edges,
                                            cv::Mat_<float> &y_edges,
                                            float ridge_start_threshold,
                                            float ridge_continue_threshold) {
-  cv::Mat_<float> edge_strength_map(x_edges.rows, x_edges.cols);
+  cv::Mat_<float> edge_strength_map =
+      x_edges.mul(x_edges) + y_edges.mul(y_edges);
+  sqrt(edge_strength_map, edge_strength_map);
   std::priority_queue<weighted_index_t> starting_points;
   for (int row = 0; row < x_edges.rows; row++) {
     for (int col = 0; col < x_edges.cols; col++) {
-      float edge_strength =
-          std::hypot(x_edges.at<float>(row, col), y_edges.at<float>(row, col));
-      if (edge_strength > ridge_start_threshold) {
-        starting_points.push({row, col, edge_strength});
+      if (edge_strength_map.at<float>(row, col) > ridge_start_threshold) {
+        starting_points.push({row, col, edge_strength_map.at<float>(row, col)});
       }
-      edge_strength_map(row, col) = edge_strength;
     }
   }
   while (!starting_points.empty()) {
@@ -120,21 +119,21 @@ cv::Mat_<float> edge_detection::Histeresis(cv::Mat_<float> &x_edges,
         starting_points.top();
     starting_points.pop();
     for (int sign = -1; sign < 2; sign += 2) {
-      float x = starting_col;
-      float y = starting_row;
-      int col = starting_col;
-      int row = starting_row;
+      int steps = 0;
+      int row = starting_row, col = starting_col;
       while (true) {
+        steps++;
         float x_slope = x_edges.at<float>(row, col);
         float y_slope = y_edges.at<float>(row, col);
         const float scalar = std::max(std::abs(x_slope), std::abs(y_slope));
         x_slope /= scalar;
         y_slope /= scalar;
         PerpendicularSlope(x_slope, y_slope);
-        x += y_slope * sign;
-        y += x_slope * sign;
-        col = x_slope > 0 ? floor(x) : ceil(x);
-        row = y_slope > 0 ? floor(y) : ceil(y);
+        row = starting_row + lround(sign * y_slope * steps);
+        col = starting_col + lround(sign * x_slope * steps);
+        if (row == starting_row && col == starting_col) {
+          continue;
+        }
         if (row < 0 || row >= x_edges.rows || col < 0 || col >= x_edges.cols) {
           break;
         }
@@ -155,7 +154,7 @@ cv::Mat_<float> edge_detection::Histeresis(cv::Mat_<float> &x_edges,
 }
 
 void edge_detection::PerpendicularSlope(float &dx, float &dy) {
-  float temp = dx;
+  const float temp = dx;
   dx = -dy;
   dy = temp;
 }
@@ -165,7 +164,6 @@ void edge_detection::CullTheWeak(cv::Mat_<float> &edges) {
     for (size_t col = 0; col < edges.cols; col++) {
       if (edges.at<float>(row, col) < NMS_THRESHOLD) {
         edges.at<float>(row, col) = 0;
-        continue;
       }
     }
   }

@@ -6,6 +6,7 @@
 #define IMAGEGRADIENTS_EDGE_DETECTOR_H
 
 #include <Eigen/Dense>
+#include <iostream>
 #include <map>
 #include <opencv2/core/eigen.hpp>
 
@@ -46,7 +47,13 @@ inline const std::map<Kernel, cv::Mat_<float>> kernels = {
 // clang-format on
 inline cv::Mat_<float> GaussianKernel(int dimension, float sigma) {
   if (sigma == 0) {
-    return cv::Mat::eye(dimension, dimension, CV_32FC1);
+    if (dimension % 2 != 1) {
+      std::cout << " Bad centering" << std::endl;
+      std::exit(0);
+    }
+    cv::Mat_<float> empty(dimension, dimension);
+    empty.at<float>(dimension / 2, dimension / 2) = 1;
+    return empty;
   }
   cv::Mat_<float> gaussian_kernel =
       cv::Mat_<float>::zeros(dimension, dimension);
