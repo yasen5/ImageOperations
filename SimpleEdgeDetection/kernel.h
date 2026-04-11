@@ -66,6 +66,16 @@ inline cv::Mat_<float> GaussianKernel(int dimension, float sigma) {
 }
 constexpr std::array<std::pair<int, int>, 4> adjacent_edge_check_directions = {
     {{-1, -1}, {-1, 0}, {0, -1}, {-1, 1}}}; // row adjustment, column adjustment
+constexpr std::array<std::pair<int, int>, 8>
+    adjacent_edge_check_directions_diagonal = {
+        {{-1, -1},
+         {-1, 0},
+         {0, -1},
+         {-1, 1},
+         {1, 1},
+         {1, 0},
+         {0, 1},
+         {1, -1}}}; // row adjustment, column adjustment
 }; // namespace edge_detection
 
 #endif // IMAGEGRADIENTS_EDGE_DETECTOR_H

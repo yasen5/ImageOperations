@@ -10,10 +10,10 @@
 #include <opencv2/core/mat.hpp>
 
 namespace edge_detection {
-constexpr float NMS_THRESHOLD = 0.5;
-constexpr float GAUSSIAN_SIGMA = 0;
+constexpr float NMS_THRESHOLD = 0.04;
+constexpr float GAUSSIAN_SIGMA = 1.8;
 constexpr int GAUSSIAN_KERNEL_SIZE = 5.0;
-constexpr int SEARCH_DISTANCE = 2;
+constexpr int SEARCH_DISTANCE = 20;
 constexpr float HISTERESIS_RIDGE_START_THRESHOLD = 0.5;
 constexpr float HISTERESIS_RIDGE_CONTINUE_THRESHOLD = 0.3;
 cv::Mat_<float> Canny(const cv::Mat_<float> &image, bool histeresis,
@@ -28,6 +28,7 @@ cv::Mat_<float> Histeresis(
 cv::Mat_<float> Binary(const cv::Mat_<float> &image, float lower_threshold,
                        float upper_threshold);
 void PerpendicularSlope(float &dx, float &dy);
+void CullTheWeak(cv::Mat_<float> &edges);
 } // namespace edge_detection
 
 #endif // IMAGEGRADIENTS_CANNY_H
