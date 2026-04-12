@@ -27,70 +27,11 @@ cv::Mat edge_detection::Canny(const cv::Mat_<float> &image, bool histeresis,
   cv::Mat_<float> y_edges = ApplyKernel(blurred, SOBEL3x3, 1, 0, true);
   cv::Mat_<float> total_edges = x_edges.mul(x_edges) + y_edges.mul(y_edges);
   sqrt(total_edges, total_edges);
-  // return ColorEdges(total_edges, x_edges, y_edges);
-  std::priority_queue<weighted_index_t> starting_points;
-  for (int row = 0; row < total_edges.rows; row++) {
-    for (int col = 0; col < total_edges.cols; col++) {
-      const float edge_strength =
-          std::hypot(x_edges.at<float>(row, col), y_edges.at<float>(row, col));
-      if (edge_strength > nms_threshold) {
-        starting_points.push({row, col, edge_strength});
-      }
-    }
-  }
-  while (!starting_points.empty()) {
-    auto [row, col, strength] = starting_points.top();
-    starting_points.pop();
-    if (total_edges.at<float>(row, col) < 0.01) {
-      continue;
-    }
-    cv::Point2f slope = {x_edges.at<float>(row, col),
-                         y_edges.at<float>(row, col)};
-    slope /= std::max(slope.x, slope.y);
-    for (int sign = -1; sign < 2; sign += 2) {
-      for (int i = 1; i <= search_distance; i++) {
-        const int check_col = col + sign * lround(i * slope.x);
-        const int check_row = row + sign * lround(i * slope.y);
-        if (check_col < 0) {
-          if (sign * slope.x < 0) {
-            break;
-          }
-          continue;
-        }
-        if (check_row < 0) {
-          if (sign * slope.x < 0) {
-            break;
-          }
-          continue;
-        }
-        if (check_col >= total_edges.cols) {
-          if (sign * slope.x > 0) {
-            break;
-          }
-          continue;
-        }
-        if (check_row >= total_edges.rows) {
-          if (sign * slope.x > 0) {
-            break;
-          }
-          continue;
-        }
-        if (check_col == col && check_row == row) {
-          continue;
-        }
-        if (i > THICKNESS / 2) {
-          total_edges.at<float>(check_row, check_col) = 0;
-          x_edges.at<float>(check_row, check_col) = 0;
-          y_edges.at<float>(check_row, check_col) = 0;
-        }
-      }
-    }
-  }
+  ThinEdges(total_edges, x_edges, y_edges);
   if (histeresis) {
-    cv::Mat_<float> histeresised = Histeresis(x_edges, y_edges);
-    // CullTheWeak(histeresised);
-    return histeresised;
+    total_edges = Histeresis(x_edges, y_edges);
   }
+  ThinEdges(total_edges, x_edges, y_edges);
   // CullTheWeak(total_edges);
   return total_edges;
 }
@@ -140,7 +81,7 @@ cv::Mat_<float> edge_detection::Histeresis(cv::Mat_<float> &x_edges,
         }
         if (edge_strength < ridge_continue_threshold) {
           num_below_continue_threshold++;
-          if (num_below_continue_threshold > HISTERESIS_CLIFF_LENGTH) {
+          if (num_below_continue_threshold >= HISTERESIS_CLIFF_LENGTH) {
             break;
           }
         } else {
@@ -214,4 +155,76 @@ cv::Mat edge_detection::ColorEdges(const cv::Mat_<float> &total_edges,
   }
 
   return color;
+}
+
+void edge_detection::ThinEdges(cv::Mat &total_edges, cv::Mat &x_edges,
+                               cv::Mat &y_edges) {
+  std::priority_queue<weighted_index_t> starting_points;
+  for (int row = 0; row < total_edges.rows; row++) {
+    for (int col = 0; col < total_edges.cols; col++) {
+      const float edge_strength =
+          std::hypot(x_edges.at<float>(row, col), y_edges.at<float>(row, col));
+      if (edge_strength > NMS_THRESHOLD) {
+        starting_points.push({row, col, edge_strength});
+      }
+    }
+  }
+  while (!starting_points.empty()) {
+    auto [row, col, strength] = starting_points.top();
+    starting_points.pop();
+    if (total_edges.at<float>(row, col) < 0.01) {
+      continue;
+    }
+    cv::Point2f slope = {x_edges.at<float>(row, col),
+                         y_edges.at<float>(row, col)};
+    slope /= std::max(slope.x, slope.y);
+    for (int sign = -1; sign < 2; sign += 2) {
+      int i = 0;
+      int num_blank = 0;
+      while (true) {
+        i++;
+        const int check_col = col + sign * lround(i * slope.x);
+        const int check_row = row + sign * lround(i * slope.y);
+        if (check_col < 0) {
+          if (sign * slope.x < 0) {
+            break;
+          }
+          continue;
+        }
+        if (check_row < 0) {
+          if (sign * slope.y < 0) {
+            break;
+          }
+          continue;
+        }
+        if (check_col >= total_edges.cols) {
+          if (sign * slope.x > 0) {
+            break;
+          }
+          continue;
+        }
+        if (check_row >= total_edges.rows) {
+          if (sign * slope.y > 0) {
+            break;
+          }
+          continue;
+        }
+        if (check_col == col && check_row == row) {
+          continue;
+        }
+        if (total_edges.at<float>(check_row, check_col) <
+            HISTERESIS_RIDGE_CONTINUE_THRESHOLD) {
+          num_blank++;
+          if (num_blank > ALLOWED_CANNY_GAP) {
+            break;
+          }
+        }
+        if (i > THICKNESS / 2) {
+          total_edges.at<float>(check_row, check_col) = 0;
+          x_edges.at<float>(check_row, check_col) = 0;
+          y_edges.at<float>(check_row, check_col) = 0;
+        }
+      }
+    }
+  }
 }
