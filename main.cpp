@@ -68,9 +68,9 @@ int main() {
   // clang-format on
   wall_image.convertTo(wall_image, CV_32FC1, 1.0);
 
-  cv::Mat_<float> cannied = edge_detection::Canny(normalized, false);
+  cv::Mat cannied = edge_detection::Canny(normalized, false);
   cv::imshow(std::format("No hist"), cannied);
-  cv::Mat_<float> hist = edge_detection::Canny(normalized, true);
+  cv::Mat hist = edge_detection::Canny(normalized, true);
   cv::imshow(std::format("Hist"), hist);
   cv::waitKey(0);
   cv::destroyAllWindows();

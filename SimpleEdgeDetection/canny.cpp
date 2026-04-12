@@ -5,6 +5,7 @@
 #include "canny.h"
 
 #include <iostream>
+#include <opencv2/imgproc.hpp>
 
 using weighted_index_t = struct WeightedIndex {
   int row;
@@ -16,18 +17,17 @@ using weighted_index_t = struct WeightedIndex {
   }
 };
 
-cv::Mat_<float> edge_detection::Canny(const cv::Mat_<float> &image,
-                                      bool histeresis,
-                                      const float nms_threshold,
-                                      const float sigma,
-                                      const int gaussian_kernel_size,
-                                      const int search_distance) {
+cv::Mat edge_detection::Canny(const cv::Mat_<float> &image, bool histeresis,
+                              const float nms_threshold, const float sigma,
+                              const int gaussian_kernel_size,
+                              const int search_distance) {
   const cv::Mat_<float> blurred =
       Convolve(image, GaussianKernel(gaussian_kernel_size, sigma));
   cv::Mat_<float> edges_x = abs(ApplyKernel(blurred, SOBEL3x3, 1, 0, false));
   cv::Mat_<float> edges_y = abs(ApplyKernel(blurred, SOBEL3x3, 1, 0, true));
   cv::Mat_<float> total_edges = edges_x.mul(edges_x) + edges_y.mul(edges_y);
   sqrt(total_edges, total_edges);
+  return ColorEdges(total_edges, edges_x, edges_y);
   std::priority_queue<weighted_index_t> starting_points;
   for (int row = 0; row < total_edges.rows; row++) {
     for (int col = 0; col < total_edges.cols; col++) {
@@ -49,7 +49,7 @@ cv::Mat_<float> edge_detection::Canny(const cv::Mat_<float> &image,
     slope /= std::max(slope.x, slope.y);
     for (int sign = -1; sign < 2; sign += 2) {
       for (int i = 1; i <= search_distance; i++) {
-        constexpr int thickness = 1;
+        constexpr int thickness = 5;
         const int check_col = col + sign * lround(i * slope.x);
         const int check_row = row + sign * lround(i * slope.y);
         if (check_col < 0) {
@@ -91,7 +91,7 @@ cv::Mat_<float> edge_detection::Canny(const cv::Mat_<float> &image,
     cv::Mat_<float> histeresised = Histeresis(edges_x, edges_y);
     return histeresised;
   }
-  // CullTheWeak(total_edges);
+  CullTheWeak(total_edges);
   return total_edges;
 }
 
@@ -191,4 +191,27 @@ void edge_detection::CullTheWeak(cv::Mat_<float> &edges) {
       }
     }
   }
+}
+
+cv::Mat edge_detection::ColorEdges(const cv::Mat_<float> &total_edges,
+                                   const cv::Mat_<float> &x_edges,
+                                   const cv::Mat_<float> &y_edges) {
+  cv::Mat angle, normalized, color;
+
+  cv::phase(x_edges, y_edges, angle, true);
+
+  angle.convertTo(normalized, CV_8U, 255.0 / 360.0);
+
+  // Apply colormap (expects CV_8UC1)
+  cv::applyColorMap(normalized, color, cv::COLORMAP_RAINBOW);
+
+  for (int row = 0; row < color.rows; row++) {
+    for (int col = 0; col < color.cols; col++) {
+      if (total_edges(row, col) < NMS_THRESHOLD) {
+        color.at<cv::Vec3b>(row, col) = cv::Vec3b(0, 0, 0);
+      }
+    }
+  }
+
+  return color;
 }
