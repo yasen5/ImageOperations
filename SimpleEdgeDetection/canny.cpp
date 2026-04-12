@@ -23,16 +23,16 @@ cv::Mat edge_detection::Canny(const cv::Mat_<float> &image, bool histeresis,
                               const int search_distance) {
   const cv::Mat_<float> blurred =
       Convolve(image, GaussianKernel(gaussian_kernel_size, sigma));
-  cv::Mat_<float> edges_x = abs(ApplyKernel(blurred, SOBEL3x3, 1, 0, false));
-  cv::Mat_<float> edges_y = abs(ApplyKernel(blurred, SOBEL3x3, 1, 0, true));
-  cv::Mat_<float> total_edges = edges_x.mul(edges_x) + edges_y.mul(edges_y);
+  cv::Mat_<float> x_edges = ApplyKernel(blurred, SOBEL3x3, 1, 0, false);
+  cv::Mat_<float> y_edges = ApplyKernel(blurred, SOBEL3x3, 1, 0, true);
+  cv::Mat_<float> total_edges = x_edges.mul(x_edges) + y_edges.mul(y_edges);
   sqrt(total_edges, total_edges);
-  return ColorEdges(total_edges, edges_x, edges_y);
+  // return ColorEdges(total_edges, x_edges, y_edges);
   std::priority_queue<weighted_index_t> starting_points;
   for (int row = 0; row < total_edges.rows; row++) {
     for (int col = 0; col < total_edges.cols; col++) {
       const float edge_strength =
-          std::hypot(edges_x.at<float>(row, col), edges_y.at<float>(row, col));
+          std::hypot(x_edges.at<float>(row, col), y_edges.at<float>(row, col));
       if (edge_strength > nms_threshold) {
         starting_points.push({row, col, edge_strength});
       }
@@ -44,12 +44,11 @@ cv::Mat edge_detection::Canny(const cv::Mat_<float> &image, bool histeresis,
     if (total_edges.at<float>(row, col) < 0.01) {
       continue;
     }
-    cv::Point2f slope = {edges_x.at<float>(row, col),
-                         edges_y.at<float>(row, col)};
+    cv::Point2f slope = {x_edges.at<float>(row, col),
+                         y_edges.at<float>(row, col)};
     slope /= std::max(slope.x, slope.y);
     for (int sign = -1; sign < 2; sign += 2) {
       for (int i = 1; i <= search_distance; i++) {
-        constexpr int thickness = 5;
         const int check_col = col + sign * lround(i * slope.x);
         const int check_row = row + sign * lround(i * slope.y);
         if (check_col < 0) {
@@ -79,19 +78,20 @@ cv::Mat edge_detection::Canny(const cv::Mat_<float> &image, bool histeresis,
         if (check_col == col && check_row == row) {
           continue;
         }
-        if (i > thickness / 2) {
+        if (i > THICKNESS / 2) {
           total_edges.at<float>(check_row, check_col) = 0;
-          edges_x.at<float>(check_row, check_col) = 0;
-          edges_y.at<float>(check_row, check_col) = 0;
+          x_edges.at<float>(check_row, check_col) = 0;
+          y_edges.at<float>(check_row, check_col) = 0;
         }
       }
     }
   }
   if (histeresis) {
-    cv::Mat_<float> histeresised = Histeresis(edges_x, edges_y);
+    cv::Mat_<float> histeresised = Histeresis(x_edges, y_edges);
+    // CullTheWeak(histeresised);
     return histeresised;
   }
-  CullTheWeak(total_edges);
+  // CullTheWeak(total_edges);
   return total_edges;
 }
 

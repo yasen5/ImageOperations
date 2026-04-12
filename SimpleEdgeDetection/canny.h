@@ -16,7 +16,8 @@ constexpr int GAUSSIAN_KERNEL_SIZE = 5.0;
 constexpr int SEARCH_DISTANCE = 5;
 constexpr float HISTERESIS_RIDGE_START_THRESHOLD = 0.16;
 constexpr float HISTERESIS_RIDGE_CONTINUE_THRESHOLD = NMS_THRESHOLD;
-constexpr int HISTERESIS_CLIFF_LENGTH = 2;
+constexpr int HISTERESIS_CLIFF_LENGTH = 1;
+constexpr int THICKNESS = 2;
 cv::Mat Canny(const cv::Mat_<float> &image, bool histeresis,
               float nms_threshold = NMS_THRESHOLD,
               float gaussian_sigma = GAUSSIAN_SIGMA,
