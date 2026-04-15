@@ -18,20 +18,19 @@ using weighted_index_t = struct WeightedIndex {
   }
 };
 
-cv::Mat edge_detection::Canny(const cv::Mat_<float> &image, bool histeresis,
-                              const float nms_threshold, const float sigma,
-                              const int gaussian_kernel_size,
-                              const int search_distance) {
+cv::Mat edge_detection::Canny(const cv::Mat_<float> &image, int stride,
+                              const bool histeresis, const float nms_threshold,
+                              const float sigma) {
   const cv::Mat_<float> blurred =
-      Convolve(image, GaussianKernel(5, sigma), 5, 0);
+      Convolve(image, GaussianKernel(stride, sigma), stride, 0);
   cv::Mat_<float> x_edges = ApplyKernel(blurred, SOBEL3x3, 1, 0, false);
   cv::Mat_<float> y_edges = ApplyKernel(blurred, SOBEL3x3, 1, 0, true);
   cv::Mat_<float> total_edges = x_edges.mul(x_edges) + y_edges.mul(y_edges);
   sqrt(total_edges, total_edges);
-  ThinEdges(total_edges, x_edges, y_edges);
+  ThinEdges(total_edges, x_edges, y_edges, nms_threshold);
   if (histeresis) {
     total_edges = Histeresis(x_edges, y_edges);
-    ThinEdges(total_edges, x_edges, y_edges);
+    ThinEdges(total_edges, x_edges, y_edges, nms_threshold);
   }
   // CullTheWeak(total_edges);
   return total_edges;
@@ -159,13 +158,13 @@ cv::Mat edge_detection::ColorEdges(const cv::Mat_<float> &total_edges,
 }
 
 void edge_detection::ThinEdges(cv::Mat &total_edges, cv::Mat &x_edges,
-                               cv::Mat &y_edges) {
+                               cv::Mat &y_edges, const float nms_threshold) {
   std::priority_queue<weighted_index_t> starting_points;
   for (int row = 0; row < total_edges.rows; row++) {
     for (int col = 0; col < total_edges.cols; col++) {
       const float edge_strength =
           std::hypot(x_edges.at<float>(row, col), y_edges.at<float>(row, col));
-      if (edge_strength > NMS_THRESHOLD) {
+      if (edge_strength > nms_threshold) {
         starting_points.push({row, col, edge_strength});
       }
     }
