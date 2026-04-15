@@ -23,15 +23,13 @@ void resize(std::vector<cv::Mat_<float>> &img_list) {
 }
 
 int main() {
-  const std::string img_name = "test_images/test_image5.jpg";
-  const cv::Mat color_image =
-      cv::imread("/Users/yasen/CLionProjects/ImageGradients/" + img_name,
-                 cv::IMREAD_COLOR);
-
-  cv::Mat grayscale =
-      cv::imread("/Users/yasen/CLionProjects/ImageGradients/" + img_name,
-                 cv::IMREAD_GRAYSCALE);
-  cv::cvtColor(color_image, grayscale, cv::COLOR_BGR2GRAY);
+  cv::Mat grayscale = cv::imread("/Users/yasen/Downloads/"
+                                 "YellowBall.jpg",
+                                 cv::IMREAD_GRAYSCALE);
+  // cv::Mat grayscale =
+  //     cv::imread("/Users/yasen/Documents/Wallpapers/"
+  //                "Surgehacker-Mech-Kamigawa-Neon-Dynasty-MtG-Art.jpg",
+  //                cv::IMREAD_GRAYSCALE);
 
   cv::Mat_<float> normalized;
   grayscale.convertTo(normalized, CV_32FC1, 1.0 / 255.0);

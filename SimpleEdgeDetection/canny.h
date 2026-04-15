@@ -10,13 +10,13 @@
 #include <opencv2/core/mat.hpp>
 
 namespace edge_detection {
-constexpr float NMS_THRESHOLD = 0.08;
+constexpr float NMS_THRESHOLD = 0.06;
 constexpr float GAUSSIAN_SIGMA = 1.8;
 constexpr int GAUSSIAN_KERNEL_SIZE = 5.0;
 constexpr int SEARCH_DISTANCE = 5;
-constexpr float HISTERESIS_RIDGE_START_THRESHOLD = 0.16;
+constexpr float HISTERESIS_RIDGE_START_THRESHOLD = 0.3;
 constexpr float HISTERESIS_RIDGE_CONTINUE_THRESHOLD = NMS_THRESHOLD;
-constexpr int HISTERESIS_CLIFF_LENGTH = 7;
+constexpr int HISTERESIS_CLIFF_LENGTH = 3;
 constexpr int THICKNESS = 2;
 constexpr int ALLOWED_CANNY_GAP = 5;
 cv::Mat Canny(const cv::Mat_<float> &image, bool histeresis,

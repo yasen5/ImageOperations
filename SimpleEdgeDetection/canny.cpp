@@ -5,6 +5,7 @@
 #include "canny.h"
 
 #include <iostream>
+#include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
 using weighted_index_t = struct WeightedIndex {
@@ -22,7 +23,7 @@ cv::Mat edge_detection::Canny(const cv::Mat_<float> &image, bool histeresis,
                               const int gaussian_kernel_size,
                               const int search_distance) {
   const cv::Mat_<float> blurred =
-      Convolve(image, GaussianKernel(gaussian_kernel_size, sigma));
+      Convolve(image, GaussianKernel(5, sigma), 5, 0);
   cv::Mat_<float> x_edges = ApplyKernel(blurred, SOBEL3x3, 1, 0, false);
   cv::Mat_<float> y_edges = ApplyKernel(blurred, SOBEL3x3, 1, 0, true);
   cv::Mat_<float> total_edges = x_edges.mul(x_edges) + y_edges.mul(y_edges);
@@ -30,8 +31,8 @@ cv::Mat edge_detection::Canny(const cv::Mat_<float> &image, bool histeresis,
   ThinEdges(total_edges, x_edges, y_edges);
   if (histeresis) {
     total_edges = Histeresis(x_edges, y_edges);
+    ThinEdges(total_edges, x_edges, y_edges);
   }
-  ThinEdges(total_edges, x_edges, y_edges);
   // CullTheWeak(total_edges);
   return total_edges;
 }
@@ -148,7 +149,7 @@ cv::Mat edge_detection::ColorEdges(const cv::Mat_<float> &total_edges,
 
   for (int row = 0; row < color.rows; row++) {
     for (int col = 0; col < color.cols; col++) {
-      if (total_edges(row, col) < NMS_THRESHOLD) {
+      if (total_edges(row, col) < HISTERESIS_RIDGE_START_THRESHOLD) {
         color.at<cv::Vec3b>(row, col) = cv::Vec3b(0, 0, 0);
       }
     }
@@ -177,7 +178,7 @@ void edge_detection::ThinEdges(cv::Mat &total_edges, cv::Mat &x_edges,
     }
     cv::Point2f slope = {x_edges.at<float>(row, col),
                          y_edges.at<float>(row, col)};
-    slope /= std::max(slope.x, slope.y);
+    slope /= std::max(std::abs(slope.x), std::abs(slope.y));
     for (int sign = -1; sign < 2; sign += 2) {
       int i = 0;
       int num_blank = 0;
