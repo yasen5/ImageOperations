@@ -23,22 +23,14 @@ void resize(std::vector<cv::Mat_<float>> &img_list) {
 }
 
 int main() {
-  cv::Mat grayscale = cv::imread("/Users/yasen/Downloads/"
-                                 "YellowBall.jpg",
-                                 cv::IMREAD_GRAYSCALE);
-  // cv::Mat grayscale =
-  //     cv::imread("/Users/yasen/Documents/Wallpapers/"
-  //                "Surgehacker-Mech-Kamigawa-Neon-Dynasty-MtG-Art.jpg",
-  //                cv::IMREAD_GRAYSCALE);
+  std::string filename =
+      "../test_images/test_image5.jpg" /*"/Users/yasen/Downloads/"
+       "YellowBall.jpg"*/
+      ;
+  cv::Mat grayscale = cv::imread(filename, cv::IMREAD_GRAYSCALE);
 
   cv::Mat_<float> normalized;
   grayscale.convertTo(normalized, CV_32FC1, 1.0 / 255.0);
-  // const cv::Mat_<float> fake_image =
-  //     (cv::Mat_<float>(5, 5) << 0, 50, 255, 50, 0, 0, 50, 255, 50, 0, 0, 50,
-  //      255, 50, 0, 0, 50, 255, 50, 0, 0, 50, 255, 50, 0);
-  // cv::Mat_<float> fake_normalized;
-  // fake_image.convertTo(fake_normalized, CV_32FC1, 1.0 / 255.0);
-
   // clang-format off
   const cv::Mat_<float> wall_image =
       (cv::Mat_<float>(20, 24) <<
@@ -66,9 +58,9 @@ int main() {
   // clang-format on
   wall_image.convertTo(wall_image, CV_32FC1, 1.0);
 
-  cv::Mat cannied = edge_detection::Canny(normalized, 5, false);
+  const cv::Mat cannied = edge_detection::Canny(normalized, 1, false);
   cv::imshow(std::format("No hist"), cannied);
-  cv::Mat hist = edge_detection::Canny(normalized, 5, true);
+  const cv::Mat hist = edge_detection::Canny(normalized, 1, true);
   cv::imshow(std::format("Hist"), hist);
   cv::waitKey(0);
   cv::destroyAllWindows();

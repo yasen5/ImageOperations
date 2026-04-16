@@ -20,9 +20,9 @@ using weighted_index_t = struct WeightedIndex {
 
 cv::Mat edge_detection::Canny(const cv::Mat_<float> &image, int stride,
                               const bool histeresis, const float nms_threshold,
-                              const float sigma) {
+                              const float gaussian_sigma) {
   const cv::Mat_<float> blurred =
-      Convolve(image, GaussianKernel(stride, sigma), stride, 0);
+      Convolve(image, GaussianKernel(stride, gaussian_sigma), stride, 0);
   cv::Mat_<float> x_edges = ApplyKernel(blurred, SOBEL3x3, 1, 0, false);
   cv::Mat_<float> y_edges = ApplyKernel(blurred, SOBEL3x3, 1, 0, true);
   cv::Mat_<float> total_edges = x_edges.mul(x_edges) + y_edges.mul(y_edges);
@@ -36,10 +36,10 @@ cv::Mat edge_detection::Canny(const cv::Mat_<float> &image, int stride,
   return total_edges;
 }
 
-cv::Mat_<float> edge_detection::Histeresis(cv::Mat_<float> &x_edges,
-                                           cv::Mat_<float> &y_edges,
-                                           float ridge_start_threshold,
-                                           float ridge_continue_threshold) {
+cv::Mat_<float>
+edge_detection::Histeresis(cv::Mat_<float> &x_edges, cv::Mat_<float> &y_edges,
+                           const float ridge_start_threshold,
+                           const float ridge_continue_threshold) {
   cv::Mat_<float> edge_strength_map =
       x_edges.mul(x_edges) + y_edges.mul(y_edges);
   sqrt(edge_strength_map, edge_strength_map);
@@ -59,16 +59,24 @@ cv::Mat_<float> edge_detection::Histeresis(cv::Mat_<float> &x_edges,
       int steps = 0;
       int row = starting_row, col = starting_col;
       size_t num_below_continue_threshold = 0;
+      float prev_x_slope = x_edges.at<float>(row, col);
+      float prev_y_slope = y_edges.at<float>(row, col);
       while (true) {
         steps++;
         float x_slope = x_edges.at<float>(row, col);
         float y_slope = y_edges.at<float>(row, col);
         const float scalar = std::max(std::abs(x_slope), std::abs(y_slope));
+        if (scalar == 0) {
+          num_below_continue_threshold++;
+        }
         x_slope /= scalar;
         y_slope /= scalar;
         PerpendicularSlope(x_slope, y_slope);
-        row = starting_row + lround(sign * y_slope * steps);
-        col = starting_col + lround(sign * x_slope * steps);
+        row = starting_row + static_cast<int>(round(sign * y_slope * steps));
+        col = starting_col + static_cast<int>(round(sign * x_slope * steps));
+        if (std::abs(col - 190) < 3 && std::abs(row - 28) < 3) {
+          std::cout << "Debug" << std::endl;
+        }
         if (row == starting_row && col == starting_col) {
           continue;
         }
@@ -81,17 +89,27 @@ cv::Mat_<float> edge_detection::Histeresis(cv::Mat_<float> &x_edges,
         }
         if (edge_strength < ridge_continue_threshold) {
           num_below_continue_threshold++;
-          if (num_below_continue_threshold >= HISTERESIS_CLIFF_LENGTH) {
-            break;
-          }
+        } else if (ContainedAngle(x_slope, y_slope, prev_x_slope,
+                                  prev_y_slope) >
+                   EDGE_ANGLE_DISPARITY_TOLERANCE) {
+          steps++;
+          num_below_continue_threshold++;
         } else {
           num_below_continue_threshold = 0;
         }
+        if (num_below_continue_threshold >= HISTERESIS_CLIFF_LENGTH) {
+          break;
+        }
         const float strength_scalar =
             starting_edge_strength / edge_strength_map.at<float>(row, col);
+        if (std::isnan(strength_scalar)) {
+          std::cout << "what" << std::endl;
+        }
         edge_strength_map.at<float>(row, col) = starting_edge_strength;
         x_edges.at<float>(row, col) *= strength_scalar;
         y_edges.at<float>(row, col) *= strength_scalar;
+        prev_x_slope = x_slope;
+        prev_y_slope = y_slope;
       }
     }
   }
@@ -105,14 +123,14 @@ void edge_detection::PerpendicularSlope(float &dx, float &dy) {
 }
 
 void edge_detection::CullTheWeak(cv::Mat_<float> &edges) {
-  for (size_t row = 0; row < edges.rows; row++) {
-    for (size_t col = 0; col < edges.cols; col++) {
+  for (int row = 0; row < edges.rows; row++) {
+    for (int col = 0; col < edges.cols; col++) {
       edges.at<float>(row, col) =
           (edges.at<float>(row, col) < NMS_THRESHOLD) ? 0 : 1;
     }
   }
-  for (size_t row = 0; row < edges.rows; row++) {
-    for (size_t col = 0; col < edges.cols; col++) {
+  for (int row = 0; row < edges.rows; row++) {
+    for (int col = 0; col < edges.cols; col++) {
       bool has_neighbor = false;
       for (const std::pair<int, int> &direction :
            adjacent_edge_check_directions_diagonal) {
@@ -183,8 +201,8 @@ void edge_detection::ThinEdges(cv::Mat &total_edges, cv::Mat &x_edges,
       int num_blank = 0;
       while (true) {
         i++;
-        const int check_col = col + sign * lround(i * slope.x);
-        const int check_row = row + sign * lround(i * slope.y);
+        const int check_col = col + sign * static_cast<int>(round(i * slope.x));
+        const int check_row = row + sign * static_cast<int>(round(i * slope.y));
         if (check_col < 0) {
           if (sign * slope.x < 0) {
             break;
